@@ -13,10 +13,10 @@ canto_feature = re.compile(r"[係唔]")
 canto_exclude = re.compile(r"(關係|吱唔|咿唔)")
 
 # Mandarin characters that are less common in Cantonese
-mando_feature = re.compile(r"[那是的他它吧沒麼么些了卻説說吃弄]|而已")
+swc_feature = re.compile(r"[那是的他它吧沒麼么些了卻説說吃弄]|而已")
 
 # A list of exceptions where the above characters can be found in Cantonese (mainly phrases or proper nouns)
-mando_exclude = re.compile(
+swc_exclude = re.compile(
     r"亞利桑那|剎那|巴塞羅那|薩那|沙那|哈瓦那|印第安那|那不勒斯|支那|"
     + r"是[否日次非但旦]|[利於]是|唯命是從|頭頭是道|似是而非|自以為是|俯拾皆是|撩是鬥非|莫衷一是|唯才是用|"
     + r"[目綠藍紅中]的|的[士確式]|波羅的海|眾矢之的|的而且確|大眼的度|"
@@ -47,12 +47,12 @@ def count_canto_feature(sentence):
     )
 
 
-def count_mando_feature(sentence):
+def count_swc_feature(sentence):
     """
     Get the number of Mandarin features
     """
-    return len(re.findall(mando_feature, sentence)) - len(
-        re.findall(mando_exclude, sentence)
+    return len(re.findall(swc_feature, sentence)) - len(
+        re.findall(swc_exclude, sentence)
     )
 
 
@@ -61,10 +61,10 @@ def get_sent_stat(sentence):
     Get the sentence stats
     """
     num_canto_unique = len(re.findall(canto_unique, sentence))
-    num_mando_feature = count_mando_feature(sentence)
+    num_swc_feature = count_swc_feature(sentence)
     num_canto_feature = count_canto_feature(sentence)
 
-    return num_canto_unique, num_mando_feature, num_canto_feature
+    return num_canto_unique, num_swc_feature, num_canto_feature
 
 
 def sentence_is_cantonese(sentence):
@@ -72,9 +72,9 @@ def sentence_is_cantonese(sentence):
     Check whether a sentence is Cantonese
     """
     num_canto_unique = len(re.findall(canto_unique, sentence))
-    num_mando_feature = count_mando_feature(sentence)
+    num_swc_feature = count_swc_feature(sentence)
 
-    return num_canto_unique > 1 or num_mando_feature == 0
+    return num_canto_unique > 1 or num_swc_feature == 0
 
 
 def get_document_stat(document):
@@ -83,9 +83,9 @@ def get_document_stat(document):
 
     doc_quotes_canto_unique = len(re.findall(canto_unique, quotes))
     doc_matrix_canto_unique = len(re.findall(canto_unique, matrix))
-    doc_quotes_mando_feature = count_mando_feature(quotes)
+    doc_quotes_swc_feature = count_swc_feature(quotes)
     doc_quotes_canto_feature = count_canto_feature(quotes)
-    doc_matrix_mando_feature = count_mando_feature(matrix)
+    doc_matrix_swc_feature = count_swc_feature(matrix)
     doc_matrix_canto_feature = count_canto_feature(matrix)
 
     sents_quotes = re.findall(
@@ -108,21 +108,21 @@ def get_document_stat(document):
         )
     print(f"Document-based metrics")
     print(
-        f"[Matrix] Uniquely Cantonese: {doc_matrix_canto_unique}, Mandarin Features: {doc_matrix_mando_feature}"
+        f"[Matrix] Uniquely Cantonese: {doc_matrix_canto_unique}, Mandarin Features: {doc_matrix_swc_feature}"
     )
     print(
-        f"[Quotes] Uniquely Cantonese: {doc_quotes_canto_unique}, Mandarin Features: {doc_quotes_mando_feature}"
+        f"[Quotes] Uniquely Cantonese: {doc_quotes_canto_unique}, Mandarin Features: {doc_quotes_swc_feature}"
     )
-    if doc_matrix_mando_feature <= 3 and doc_matrix_canto_unique > 1:
+    if doc_matrix_swc_feature <= 3 and doc_matrix_canto_unique > 1:
         print("Written Cantonese")
     elif (
         doc_quotes_canto_unique > doc_matrix_canto_unique
-        and doc_matrix_mando_feature > doc_matrix_canto_unique
+        and doc_matrix_swc_feature > doc_matrix_canto_unique
     ):
         print("Dialogue-Narrative split")
-    elif doc_matrix_mando_feature > 3 and doc_matrix_canto_unique > 1:
+    elif doc_matrix_swc_feature > 3 and doc_matrix_canto_unique > 1:
         print("Mixed/ Translanguaging")
-    elif doc_matrix_mando_feature > 3 and doc_matrix_canto_unique == 0:
+    elif doc_matrix_swc_feature > 3 and doc_matrix_canto_unique == 0:
         print("SWC")
     else:
         print("Cannot be classified")
