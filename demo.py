@@ -1,134 +1,6 @@
-import re
+from cantonesedetect.judge import judge
 
-# Cantonese characters not found in Mandarin
-canto_unique = re.compile(
-    r"[嘅嗰啲咗佢喺咁噉冇啩哋畀嚟諗惗乜嘢閪撚𨳍𨳊瞓睇㗎餸𨋢摷喎嚿噃嚡嘥嗮啱揾搵喐逳噏𢳂岋糴揈捹撳㩒𥄫攰癐冚孻冧𡃁嚫跣𨃩瀡氹嬲掟孭黐唞㪗埞忟𢛴]|"
-    + r"唔[係得會好識使洗駛通知到去走掂該錯差]|點[樣會做得解]|[琴尋噚聽第]日|[而依]家|家[下陣]|[真就實梗又話都]係|邊[度個位科]|"
-    + r"[嚇凍攝整揩逢淥浸激][親嚫]|[橫搞傾諗得唔]掂|仲[有係話要得好衰唔]|返[學工去歸]|執[好生實返輸]|[留坐剩]低|"
-    + r"屋企|收皮|慳錢|傾[偈計]|幫襯|求其|是[但旦]|[濕溼]碎|零舍|肉[赤緊酸]|核突|同埋|勁[秋抽]"
-)
-# Cantonese characters that are less common in Mandarin
-canto_feature = re.compile(r"[係唔]")
-# A list of exceptions where the above characters can be found in Mandarin
-canto_exclude = re.compile(r"(關係|吱唔|咿唔)")
-
-# Mandarin characters that are less common in Cantonese
-swc_feature = re.compile(r"[那是的他它吧沒麼么些了卻説說吃弄]|而已")
-
-# A list of exceptions where the above characters can be found in Cantonese (mainly phrases or proper nouns)
-swc_exclude = re.compile(
-    r"亞利桑那|剎那|巴塞羅那|薩那|沙那|哈瓦那|印第安那|那不勒斯|支那|"
-    + r"是[否日次非但旦]|[利於]是|唯命是從|頭頭是道|似是而非|自以為是|俯拾皆是|撩是鬥非|莫衷一是|唯才是用|"
-    + r"[目綠藍紅中]的|的[士確式]|波羅的海|眾矢之的|的而且確|大眼的度|"
-    + r"些[微少許小]|"
-    + r"[淹沉浸覆湮埋沒出]沒|沒[落頂收]|神出鬼沒|"
-    + r"了[結無斷當然哥結得解事之]|[未明]了|不得了|大不了|"
-    + r"他[信人國日殺鄉]|[其利無排維結]他|馬耳他|他加祿|他山之石|"
-    + r"其[它]|"
-    + r"[酒網水貼]吧|吧[台臺枱檯]|"
-    + r"[退忘阻]卻|卻步|"
-    + r"[遊游小傳解學假淺眾衆訴論][説說]|[說説][話服明]|自圓其[説說]|長話短[說説]|不由分[說説]|"
-    + r"吃[虧苦力]|"
-    + r"弄[堂]"
-)
-# A list of quotes: Content inside and outside a pair of quotes should be treated separately.
-allquotes = re.compile(r"「[^「」]*」")
-
-# A list of sentential delimiters
-alldelimiters = re.compile(r"，。；？！⋯")
-
-
-def count_canto_feature(sentence):
-    """
-    Get the number of Cantonese features
-    """
-    return len(re.findall(canto_feature, sentence)) - len(
-        re.findall(canto_exclude, sentence)
-    )
-
-
-def count_swc_feature(sentence):
-    """
-    Get the number of Mandarin features
-    """
-    return len(re.findall(swc_feature, sentence)) - len(
-        re.findall(swc_exclude, sentence)
-    )
-
-
-def get_sent_stat(sentence):
-    """
-    Get the sentence stats
-    """
-    num_canto_unique = len(re.findall(canto_unique, sentence))
-    num_swc_feature = count_swc_feature(sentence)
-    num_canto_feature = count_canto_feature(sentence)
-
-    return num_canto_unique, num_swc_feature, num_canto_feature
-
-
-def sentence_is_cantonese(sentence):
-    """
-    Check whether a sentence is Cantonese
-    """
-    num_canto_unique = len(re.findall(canto_unique, sentence))
-    num_swc_feature = count_swc_feature(sentence)
-
-    return num_canto_unique > 1 or num_swc_feature == 0
-
-
-def get_document_stat(document):
-    quotes = "⋯".join(re.findall(allquotes, document))
-    matrix = re.sub(allquotes, " ", document)
-
-    doc_quotes_canto_unique = len(re.findall(canto_unique, quotes))
-    doc_matrix_canto_unique = len(re.findall(canto_unique, matrix))
-    doc_quotes_swc_feature = count_swc_feature(quotes)
-    doc_quotes_canto_feature = count_canto_feature(quotes)
-    doc_matrix_swc_feature = count_swc_feature(matrix)
-    doc_matrix_canto_feature = count_canto_feature(matrix)
-
-    sents_quotes = re.findall(
-        f"(?:[^{alldelimiters}]*)*[{alldelimiters}]?", quotes)
-    sents_matrix = re.findall(
-        f"(?:[^{alldelimiters}]*)*[{alldelimiters}]?", matrix)
-    sents_quotes_canto = list(
-        filter(sentence_is_cantonese, sents_quotes))
-    sents_matrix_canto = list(
-        filter(sentence_is_cantonese, sents_matrix))
-
-    print(f"Document: {document[:20]} ...")
-    print("Legit Cantonese ratio (by sentence)")
-    print(
-        f"Matrix: {len(sents_matrix_canto)}/{len(sents_matrix)} ({len(sents_matrix_canto)/len(sents_matrix)*100}%)"
-    )
-    if len(sents_quotes) > 0:
-        print(
-            f"Quotes: {len(sents_quotes_canto)}/{len(sents_quotes)} ({len(sents_quotes_canto)/len(sents_quotes)*100}%)"
-        )
-    print(f"Document-based metrics")
-    print(
-        f"[Matrix] Uniquely Cantonese: {doc_matrix_canto_unique}, Mandarin Features: {doc_matrix_swc_feature}"
-    )
-    print(
-        f"[Quotes] Uniquely Cantonese: {doc_quotes_canto_unique}, Mandarin Features: {doc_quotes_swc_feature}"
-    )
-    if doc_matrix_swc_feature <= 3 and doc_matrix_canto_unique > 1:
-        print("Written Cantonese")
-    elif (
-        doc_quotes_canto_unique > doc_matrix_canto_unique
-        and doc_matrix_swc_feature > doc_matrix_canto_unique
-    ):
-        print("Dialogue-Narrative split")
-    elif doc_matrix_swc_feature > 3 and doc_matrix_canto_unique > 1:
-        print("Mixed/ Translanguaging")
-    elif doc_matrix_swc_feature > 3 and doc_matrix_canto_unique == 0:
-        print("SWC")
-    else:
-        print("Cannot be classified")
-
-
-data = [
+data1 = [
     "0 我今日第一日返工，請多多指教。",
     "1 我地今晚出去食飯。我去會合你先。你鍾意可以去剪個頭髮先，個袋我幫你keep。",
     "2 德州「鼠王」凱普林，牠的體重超過一百磅，外貌十足倉鼠，其實是一隻水豚，因身形龐大，走在街上常被人當作狗呢。",
@@ -151,7 +23,12 @@ data = [
     "19 阿牛給我食煙，說有嘢，我就接過來食，不到幾分鐘就天旋地轉，想嘔，我就走到廁所去嘔，又沒甚麼嘔出來。出來還是好暈，阿物說，第一次是這樣。"
 ]
 
+data2 = open('test.txt', encoding='utf-8').readlines()
+
 if __name__ == '__main__':
-    for doc in data:
-        get_document_stat(doc)
-        print('*'*10)
+    output1 = open("output1.txt", 'w',encoding="utf-8")
+    for i, doc in enumerate(data1):
+        print(judge(doc, split_seg=False, get_quote=True, print_stat=False, fast_mode=True)[0], file=output1)
+    output2 = open("output2.txt", 'w',encoding="utf-8")
+    for i, doc in enumerate(data2):
+        print(judge(doc, split_seg=False, get_quote=True, print_stat=False, fast_mode=True)[0], file=output2)
