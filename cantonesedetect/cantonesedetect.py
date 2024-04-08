@@ -63,7 +63,7 @@ def extract_features(segment):
         'swc_exclude': re.findall(SWC_EXCLUDE_RE, segment)
     }
 
-def analyze(segment):
+def get_feature_stats(segment):
     """
     Return the number of Cantonese and SWC features in a segment.
     """
@@ -108,8 +108,12 @@ SWC_PRESENCE = 0.03 # SWC features are expected to be found even in informal spe
 
 def judge(segment, detailed = False):
     """
+    If Cantonese feature and unique prescence is above threshold, and Mandarin feature below threshold, then it's Cantonese
+    If the Cantonese feature and uniquie prescence is below threshold, and Mandarin feature above threshold, then it's SWC
+    If both Cantonese and SWC features are below threshold, then it's Neutral texts
+    If both Cantonese and SWC features are above threshold, thne it's Mixed.
     """
-    features, stats = analyze(segment)
+    features, stats = get_feature_stats(segment)
     l = stats['length']
     if l == 0:
         return "Nil"
@@ -117,20 +121,22 @@ def judge(segment, detailed = False):
         print_analysis(segment, features, stats)
 
     if (stats['canto_unique_count'] + stats['canto_feature_count'] ) >= math.floor(CANTO_PRESENCE * l) and stats['swc_feature_count'] <= math.floor(SWC_TOLERANCE * l):
-        return "Written Cantonese"
+        return "cantonese"
     elif stats['canto_unique_count'] <=  math.floor(CANTO_TOLERANCE * l) and stats['swc_feature_count'] >= math.floor (SWC_PRESENCE *l):
-        return "SWC"
+        return "mandarin"
+    elif (stats['canto_unique_count'] + stats['canto_feature_count'] ) <  math.floor(CANTO_TOLERANCE * l) and stats['swc_feature_count'] < math.floor (SWC_TOLERANCE *l):
+        return "neutral"
     else:
-        return "Mixed"
+        return "mixed"
 
-from collections import Counter
 
-def get_document_stat(document):
-
+def get_document_stat(document, output):
+    """
+    
+    """
     # Document-level stats: Coarse
-    print("Document-level: All words")
-    print(judge(document, True))
-
+    # print("Document-level: All words")
+    print(judge(document, False), file=output)
     # Document-level stats: Coarse: Separate quotes and matrix
     matrix, quotes = separate_quotes(document)
     if len(quotes) > 10:
@@ -147,50 +153,3 @@ def get_document_stat(document):
             print("Mixed/Translanguaging")
     else:
         "N/A: No quotes"
-    # Document-level stats: Fine
-#     sents_matrix = re.split(r'ALL_DELIMTERS_RE', matrix, 2)
-#     sents_quotes = re.split(r'ALL_DELIMTERS_RE', quotes, 2)
-#     matrix_judgements = [judge(s) for s in sents_matrix]
-#     quotes_judgements = [judge(s) for s in sents_quotes]
-#     matrix_stats = Counter(matrix_judgements)    
-#     quotes_stats = Counter(quotes_judgements)
-#     total_stats = matrix_stats + quotes_stats
-#     wc_matrix = sum([len(s) for s in sents_matrix])
-#     wc_quotes = sum([len(s) for s in sents_quotes])
-#     wc_total = len_matrix + len_quotes
-#     sc_matrix = len(sents_matrix)
-#     sc_quotes = len(sents_quotes)
-#     sc_total = sc_matrix + sc_quotes    
-#     print("Fine")
-#     print("Matrix stats")
-#     print (matrix_stats)
-#     print("Quotes stats")
-#     print (quotes_stats)
-
-#     if total_stats['Written Cantonese'] >= math.ceil(sc_total * 0.95) and
-#         print("Written Cantonese")
-
-#     if matrix_stats['SWC'] >= math.ceil(sc_total * 0.5) and
-#         quotes_stats['Written Cantonese'] >= matrix_stats['Written Cantonese'] and
-#         print("Dialogue-Narrative split")
-
-#         matrix_stats['SWC'] <= math.floor(SWC_TOLERANCE * l):
-#         print("Written Cantonese")
-
-
-#     if doc_matrix_swc_feature <= 3 and doc_matrix_canto_unique > 1:
-#         print("Written Cantonese")
-#     elif (
-#         doc_quotes_canto_unique > doc_matrix_canto_unique
-#         and doc_matrix_swc_feature > doc_matrix_canto_unique
-#     ):
-
-#     elif doc_matrix_swc_feature > 3 and doc_matrix_canto_unique > 1:
-#         print("Mixed/ Translanguaging")
-#     else:
-#         print("Cannot be classified")
-
-# # Matrix stats
-
-# # Quote stats
-
