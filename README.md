@@ -60,13 +60,14 @@ pip install cantonesedetect
 Use `judge()`
 
 ```python
-from cantonesedetect import judge
+from cantonesedetect.judge import judge
 
-print(judge('你喺邊度')) # cantonese
-print(judge('你在哪裏')) # mandarin
-print(judge('是咁的'))  # mixed
-print(judge('去學校讀書'))  # neutral
+print(judge('你喺邊度')[0]) # Cantonese
+print(judge('你在哪裏')[0]) # Mandarin
+print(judge('是咁的')[0])  # Mixed
+print(judge('去學校讀書')[0])  # Neutral
 ```
 
 ### CLI
+
 待補充 to be added.
