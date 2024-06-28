@@ -25,15 +25,11 @@ jobs:
         run: |
           python -m unittest tests/test_judge.py
 
-      - name: Update version in setup.py
-        run: |
-          version=$(python -c "exec(open('cantonesedetect/version.py').read()); print(__version__)")
-          sed -i "s/version=.*/version='$version',/" setup.py
+      - name: deps
+        run: python -m pip install -U build
 
-      - name: Build and publish
-        run: |
-          python setup.py sdist bdist_wheel
-          twine upload dist/*
+      - name: build
+        run: python -m build
 
       - name: mint API token
         id: mint-token
