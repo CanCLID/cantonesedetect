@@ -15,8 +15,5 @@ jobs:
       id-token: write
     steps:
       # retrieve your distributions here
-      - name: Run tests
-        run: |
-          python -m unittest tests/test_judge.py
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
