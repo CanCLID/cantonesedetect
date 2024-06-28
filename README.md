@@ -2,21 +2,22 @@
 
 [![license](https://img.shields.io/github/license/DAVFoundation/captain-n3m0.svg?style=flat-square)](https://github.com/DAVFoundation/captain-n3m0/blob/master/LICENSE)
 
-本項目為 [CantoFilter](https://github.com/CanCLID/cantonese-classifier) 之後續。
-This is an extension of the [CantoFilter](https://github.com/CanCLID/cantonese-classifier) project.
+本項目為 [canto-filter](https://github.com/CanCLID/canto-filter) 之後續。canto-filter 得 4 個分類標籤且判斷邏輯更加快速簡單，適合在線快速篩選判別文本或者其他要求低延遲、速度快嘅應用場合。本項目採用更精細嘅判斷邏輯，有 6 個分類標籤，準確度更高，但速度亦會相對 canto-filter 更慢。
+
+This is an extension of the [canto-filter](https://github.com/CanCLID/canto-filter) project. canto-filter has only 4 output labels. It has a simipler classification logic and is faster, more suitable for use cases which require low-latency or high classification speed. This package has 6 output and uses a more sophisticated classification logic for more fine-grained classification. It has higher classification accuracy but slower performance.
 
 ## 引用 Citation
 
 抽出字詞特徵嘅策略同埋實踐方式，喺下面整理。討論本分類器時，請引用：
 
-Chaak-ming Lau, Mingfei Lau, and Ann Wai Huen To. 2024. 
-[The Extraction and Fine-grained Classification of Written Cantonese Materials through Linguistic Feature Detection.](https://aclanthology.org/2024.eurali-1.4/) 
-In Proceedings of the 2nd Workshop on Resources and Technologies for Indigenous, Endangered and Lesser-resourced Languages in Eurasia (EURALI) 
+Chaak-ming Lau, Mingfei Lau, and Ann Wai Huen To. 2024.
+[The Extraction and Fine-grained Classification of Written Cantonese Materials through Linguistic Feature Detection.](https://aclanthology.org/2024.eurali-1.4/)
+In Proceedings of the 2nd Workshop on Resources and Technologies for Indigenous, Endangered and Lesser-resourced Languages in Eurasia (EURALI)
 @ LREC-COLING 2024, pages 24–29, Torino, Italia. ELRA and ICCL.
 
 分類器採用嘅分類標籤及基準，參考咗對使用者嘅語言意識形態嘅研究。討論分類準則時，請引用：
 
-The definitions and boundaries of the labels depend on the user's language ideology. 
+The definitions and boundaries of the labels depend on the user's language ideology.
 When discussing the criteria adopted by this tool, please cite:
 
 Lau, Chaak Ming. 2024. Ideologically driven divergence in Cantonese vernacular writing practices. In J.-F. Dupré, editor, _Politics of Language in Hong Kong_, Routledge.
@@ -32,6 +33,7 @@ The filter is based on Regex rules and detects lexical features specific to Cant
 ### 標籤 Labels
 
 分類器會將輸入文本分成四類（粗疏）或六類（精細），分類如下:
+
 The classifiers output four (coarse) or six (fine-grained) categories. The labels are:
 
 1. `Cantonese`: 純粵文，僅含有粵語特徵字詞，例如“你喺邊度” | Pure Cantonese text, contains Cantonese-featured words. E.g. 你喺邊度

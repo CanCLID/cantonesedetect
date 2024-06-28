@@ -12,5 +12,6 @@ setup(
     author='Chaak Ming Lau, Mingfei Lau and Ann Wai Huen To',
     packages=find_packages(),
     long_description=long_description,
-    long_description_content_type='text/markdown'
+    long_description_content_type='text/markdown',
+    test_suite='tests',
 )

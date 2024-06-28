@@ -1,4 +1,9 @@
-import re, math
+"""
+Core logic:
+1. 
+"""
+import re
+import math
 from typing import List, Tuple, Dict
 
 # Cantonese characters not found in SWC
@@ -46,22 +51,39 @@ ALL_HAN_RE = re.compile(
     r'\U00030000-\U000323af\ufa0e\ufa0f\ufa11\ufa13\ufa14\ufa1f\ufa21\ufa23\ufa24\ufa27\ufa28\ufa29\u3006\u3007]'
     r'[\ufe00-\ufe0f\U000e0100-\U000e01ef]?')
 
-## Thresholds
-CANTO_TOLERANCE = 0.01 # Cantonese features in less than 1% of the text will still be considered SWC.
-SWC_TOLERANCE = 0.01 # SWC features in less than 1% of the text will still be considered Written Cantonese.
-CANTO_PRESENCE = 0.03 # The minimum Cantonese features expected to be found in Mixed or Cantonese text.
-SWC_PRESENCE = 0.03 # The minimum SWC features expected to be found in Mixed or SWC text.
+# Thresholds
+# Cantonese features in less than 1% of the text will still be considered SWC.
+CANTO_TOLERANCE = 0.01
+# SWC features in less than 1% of the text will still be considered Written Cantonese.
+SWC_TOLERANCE = 0.01
+# The minimum Cantonese features expected to be found in Mixed or Cantonese text.
+CANTO_PRESENCE = 0.03
+# The minimum SWC features expected to be found in Mixed or SWC text.
+SWC_PRESENCE = 0.03
 
 
 def hant_length(segment: str) -> int:
     """
     Return the number of Han characters in a segment.
+
+    Args:
+        segment (str): The segment of text to be analyzed.
+
+    Returns:
+        int: The number of Han characters in the segment.
     """
     return len(re.findall(ALL_HAN_RE, segment))
+
 
 def extract_features(segment: str) -> Dict[str, List[str]]:
     """
     Return a set of Cantonese and SWC features in a segment.
+
+    Args:
+        segment (str): The segment of text to be analyzed.
+
+    Returns:
+        dict: A dictionary containing lists of Cantonese and SWC features.
     """
     return {
         'canto_feature': re.findall(CANTO_FEATURE_RE, segment),
@@ -70,30 +92,32 @@ def extract_features(segment: str) -> Dict[str, List[str]]:
         'swc_exclude': re.findall(SWC_EXCLUDE_RE, segment)
     }
 
+
 def get_feature_stats(segment: str, fast_mode: bool = False) -> Tuple[Dict[str, List[str]], Dict[str, int]]:
     """
     Return the number of Cantonese and SWC features in a segment.
 
-    Parameters:
-    segment (str): The input segment to extract features from.
-    fast_mode (bool, optional): If True, use a faster method to calculate the length of the segment. 
-                                Defaults to False.
+    Args:
+        segment (str): The input segment to extract features from.
+        fast_mode (bool, optional): If True, use a faster method to calculate the length of the segment. 
+                                    Defaults to False.
 
     Returns:
-    tuple: A tuple containing two dictionaries. The first dictionary contains the extracted features, 
-           including Cantonese and SWC features. The second dictionary contains the statistics, 
-           including the count of Cantonese features, count of Cantonese features (excluding 
-           excluded features), count of SWC features (excluding excluded features), and the length 
-           of the segment.
-
+        tuple: A tuple containing two dictionaries. The first dictionary contains the extracted features, 
+               including Cantonese and SWC features. The second dictionary contains the statistics, 
+               including the count of Cantonese features, count of Cantonese features (excluding 
+               excluded features), count of SWC features (excluding excluded features), and the length 
+               of the segment.
     """
     features = extract_features(segment)
     stats = {
         'canto_feature_count': len(features['canto_feature']) - len(features['canto_exclude']),
         'swc_feature_count': len(features['swc_feature']) - len(features['swc_exclude']),
-        'length': hant_length(segment) if fast_mode else len(segment) # len for faster execution
+        # len for faster execution
+        'length': hant_length(segment) if fast_mode else len(segment)
     }
     return features, stats
+
 
 def separate_quotes(document: str) -> Tuple[str, str]:
     """
@@ -105,11 +129,11 @@ def separate_quotes(document: str) -> Tuple[str, str]:
     Returns:
         tuple: A tuple containing the matrix and quotes extracted from the document.
     """
-
     matrix = re.sub(ALL_QUOTEMARKS_RE, " ", document)
     quotes = "⋯".join(re.findall(ALL_QUOTEMARKS_RE, document))
 
     return matrix, quotes
+
 
 def print_analysis(segment: str, features: Dict[str, List[str]], stats: Dict[str, int]) -> None:
     """
@@ -139,16 +163,15 @@ def judge_single(segment: str, detailed: bool = False, fast_mode: bool = False) 
     If both Cantonese and SWC features are below the threshold, then it's Neutral text.
     If both Cantonese and SWC features are above the threshold, then it's Mixed.
 
-    Parameters:
-    - segment: The segment of text to be judged.
-    - detailed: If True, print the analysis of the segment.
-    - fast_mode: If True, use a faster method to calculate the length of the segment.
+    Args:
+        segment (str): The segment of text to be judged.
+        detailed (bool, optional): If True, print the analysis of the segment. Defaults to False.
+        fast_mode (bool, optional): If True, use a faster method to calculate the length of the segment. Defaults to False.
 
     Returns:
-    - language: The language of the segment (Cantonese, SWC, Neutral, or Mixed).
-    - canto_count: The count of Cantonese features in the segment.
-    - swc_count: The count of SWC features in the segment.
-    - length: The length of the segment in Han characters.
+        tuple: A tuple containing the language of the segment (Cantonese, SWC, Neutral, or Mixed), 
+               the count of Cantonese features in the segment, the count of SWC features in the segment, 
+               and the length of the segment in Han characters.
     """
     features, stats = get_feature_stats(segment, fast_mode)
     length = stats['length']
@@ -178,6 +201,7 @@ def judge_single(segment: str, detailed: bool = False, fast_mode: bool = False) 
             language = "Mixed"
     return language, canto_count, swc_count, length
 
+
 def judge_segments(segments: List[str], detailed: bool = False, fast_mode: bool = False) -> Tuple[str, int, int, int]:
     """
     Determines the language of each segment in the given list of segments.
@@ -190,85 +214,134 @@ def judge_segments(segments: List[str], detailed: bool = False, fast_mode: bool 
     Returns:
         tuple: A tuple containing the language of the segments, the count of Cantonese segments,
                the count of SWC segments, and the total number of segments.
-
-    Raises:
-        None
     """
     l = len(segments)
     if l == 0:
         return "Empty", 0, 0, l
+
+    judgements = [judge_single(segment, detailed, fast_mode)[
+        0] for segment in segments]
+    canto_seg_count = judgements.count("Cantonese")
+    swc_seg_count = judgements.count("SWC")
+    neutral_seg_count = judgements.count("Neutral")
+
+    canto_only = canto_seg_count + \
+        neutral_seg_count >= math.ceil(len(judgements) * 0.95)
+    swc_only = swc_seg_count + \
+        neutral_seg_count >= math.ceil(len(judgements) * 0.95)
+    neutral_only = neutral_seg_count >= math.ceil(len(judgements) * 0.95)
+
+    if neutral_only:
+        language = "Neutral"
+    elif canto_only:
+        language = "Cantonese"
+    elif swc_only:
+        language = "SWC"
     else:
-        judgements = [judge_single(segment, detailed, fast_mode)[0] for segment in segments]
-        canto_seg_count = judgements.count("Cantonese")
-        swc_seg_count = judgements.count("SWC")
-        neutral_seg_count = judgements.count("Neutral")
+        language = "Mixed"
+    return language, canto_seg_count, swc_seg_count, l
 
-        canto_only = canto_seg_count + neutral_seg_count >= math.ceil(len(judgements) * 0.95)
-        swc_only = swc_seg_count + neutral_seg_count >= math.ceil(len(judgements) * 0.95)
-        neutral_only = neutral_seg_count >= math.ceil(len(judgements) * 0.95)
 
-        if neutral_only:
-            language = "Neutral"
-        elif canto_only:
-            language = "Cantonese"
-        elif swc_only:
-            language = "SWC"
-        else:
-            language = "Mixed"
-        return language, canto_seg_count, swc_seg_count, l
+def show_ratio(count: int, total: int) -> str:
+    """
+    Calculate and return the ratio of a count to the total.
 
-def judge(document: str, split_seg: bool = False, get_quote: bool = False, print_stat: bool = False, fast_mode: bool = False) -> Tuple[str, str, str]:
+    Args:
+        count (int): The count of features.
+        total (int): The total number of features.
+
+    Returns:
+        str: A string representing the ratio in the format 'count/total (percentage%)'.
+    """
+    if total == 0:
+        return 'N/A'
+    return f'{count}/{total} ({count/total*100:.2f}%)'
+
+
+def judge_document(document: str, split_seg: bool, print_stat: bool, fast_mode: bool) -> Tuple[str, int, int, int]:
     """
     Judge the language of a document.
 
     Args:
         document (str): The document to be judged.
-        split_seg (bool, optional): Split the document into segments if True. Defaults to False.
-        get_quote (bool, optional): Separate Matrix and Quote if True. Defaults to False.
-        print_stat (bool, optional): Print judgement to I/O if True. Defaults to False.
-        fast_mode (bool, optional): Use fast mode if True. Defaults to False.
+        split_seg (bool): Split the document into segments if True.
+        print_stat (bool): Print judgement to I/O if True.
+        fast_mode (bool): Use fast mode if True.
 
     Returns:
-        tuple[str, str, str]: A tuple containing the category, Cantonese ratio, and SWC ratio.
+        tuple: A tuple containing the language of the document, the count of Cantonese features,
+               the count of SWC features, and the length of the document.
+    """
+    if not split_seg:
+        return judge_single(document, print_stat, fast_mode)
+    segments = [segment for segment in re.split(
+        ALL_DELIMITERS_RE, document) if segment.strip()]
+    return judge_segments(segments, print_stat, fast_mode)
+
+
+def judge_with_quotes(document: str, split_seg: bool, print_stat: bool, fast_mode: bool) -> Tuple[str, str, str]:
+    """
+    Judge the language of a document with quotes.
+
+    Args:
+        document (str): The document to be judged.
+        split_seg (bool): Split the document into segments if True.
+        print_stat (bool): Print judgement to I/O if True.
+        fast_mode (bool): Use fast mode if True.
+
+    Returns:
+        tuple: A tuple containing the language of the document, the Cantonese ratio, and the SWC ratio.
+    """
+    matrix, quotes = separate_quotes(document)
+    if not matrix:
+        return judge(quotes, split_seg, False, print_stat, fast_mode)
+    if not quotes:
+        return judge(matrix, split_seg, False, print_stat, fast_mode)
+
+    judgement, _c1, _s1 = judge(
+        matrix, split_seg, False, print_stat, fast_mode)
+    quotes_judgement, _c2, _s2 = judge(
+        quotes, split_seg, False, print_stat, fast_mode)
+
+    if judgement == quotes_judgement or quotes_judgement == 'Neutral':
+        pass
+    elif judgement == 'Neutral':
+        judgement = quotes_judgement
+    elif judgement == 'SWC' and quotes_judgement == 'Cantonese':
+        judgement = "CantoneseQuotesInSWC"
+    elif judgement == 'SWC' and quotes_judgement == 'Mixed':
+        judgement = "MixedQuotesInSWC"
+    else:
+        judgement = "Mixed"
+
+    canto_ratio = f'[M]{_c1}:[Q]{_c2}'
+    swc_ratio = f'[M]{_s1}:[Q]{_s2}'
+    return judgement, canto_ratio, swc_ratio
+
+
+def judge(document: str, split_seg: bool = False, get_quote: bool = False, print_stat: bool = False, fast_mode: bool = False) -> Tuple[str, str, str]:
+    """
+    The only exposed api. Judge the language of a document.
+
+    Args:
+        document (str): The document to be judged.
+        split_seg (bool): Split the document into segments if True. Defaults to False.
+        get_quote (bool): Separate Matrix and Quote if True. Defaults to False.
+        print_stat (bool): Print judgement to I/O if True. Defaults to False.
+        fast_mode (bool): Use fast mode if True. Defaults to False.
+
+    Returns:
+        tuple[str, str, str]: A tuple containing:
             - Category: Cantonese, SWC, Mixed, Neutral, CantoneseQuotesInSWC, MixedQuotesInSWC
             - Cantonese ratio: The ratio of Cantonese characters in the document.
             - SWC ratio: The ratio of SWC characters in the document.
     """
-    
-    def show_ratio(count, total):
-        if total == 0:
-            return 'N/A'
-        return f'{count}/{total} ({count/total*100:.2f}%)'
+    if get_quote:
+        return judge_with_quotes(document, split_seg, print_stat, fast_mode)
 
-    if not get_quote:
-        if not split_seg:
-            judgement, _c, _s, _l = judge_single(document, print_stat, fast_mode)
-        else:
-            segments = [segment for segment in re.split(ALL_DELIMITERS_RE, document) if segment.strip()]
-            judgement, _c, _s, _l = judge_segments(segments, print_stat, fast_mode)
-        canto_ratio = show_ratio(_c, _l)
-        swc_ratio = show_ratio(_s, _l)
-    else: # get_quote
-        matrix, quotes = separate_quotes(document)
-        lm = len(matrix)
-        lq = len(quotes)
-        if lm == 0:
-            return judge(quotes, split_seg, False, print_stat, fast_mode)
-        elif lq == 0:
-            return judge(matrix, split_seg, False, print_stat, fast_mode)
-        else:
-            judgement, _c1, _s1 = judge(matrix, split_seg, False, print_stat, fast_mode)
-            quotes_judgement, _c2, _s2 = judge(quotes, split_seg, False, print_stat, fast_mode)
-            if judgement == quotes_judgement or quotes_judgement == 'Neutral':
-                pass
-            elif judgement == 'Neutral':
-                judgement = quotes_judgement
-            elif judgement == 'SWC' and quotes_judgement == 'Cantonese':
-                judgement = "CantoneseQuotesInSWC"
-            elif judgement == 'SWC' and quotes_judgement == 'Mixed':
-                judgement = "MixedQuotesInSWC"
-            else:
-                judgement = "Mixed"
-            canto_ratio = '[M]' + _c1 + ':' + '[Q]' + _c2
-            swc_ratio = '[M]' + _s1 + ':' + '[Q]' + _s2
+    judgement, canto_count, swc_count, total_length = judge_document(
+        document, split_seg, print_stat, fast_mode)
+    canto_ratio = show_ratio(canto_count, total_length)
+    swc_ratio = show_ratio(swc_count, total_length)
+
     return judgement, canto_ratio, swc_ratio

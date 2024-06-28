@@ -1,0 +1,6 @@
+.aider*
+__pycache__/
+.pytest_cache/
+# Ignore Python bytecode files
+*.pyc
+__pycache__/

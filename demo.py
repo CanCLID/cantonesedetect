@@ -26,9 +26,11 @@ data1 = [
 data2 = open('test.txt', encoding='utf-8').readlines()
 
 if __name__ == '__main__':
-    output1 = open("output1.txt", 'w',encoding="utf-8")
+    output1 = open("output1.txt", 'w', encoding="utf-8")
     for i, doc in enumerate(data1):
-        print(judge(doc, split_seg=False, get_quote=True, print_stat=False, fast_mode=True)[0], file=output1)
-    output2 = open("output2.txt", 'w',encoding="utf-8")
+        print(judge(doc, split_seg=False, get_quote=True,
+              print_stat=False, fast_mode=True)[0], file=output1)
+    output2 = open("output2.txt", 'w', encoding="utf-8")
     for i, doc in enumerate(data2):
-        print(judge(doc, split_seg=False, get_quote=True, print_stat=False, fast_mode=True)[0], file=output2)
+        print(judge(doc, split_seg=False, get_quote=True,
+              print_stat=False, fast_mode=True)[0], file=output2)
