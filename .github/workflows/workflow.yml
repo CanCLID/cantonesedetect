@@ -28,5 +28,8 @@ jobs:
         run: |
           version=$(python -c "exec(open('cantonesedetect/version.py').read()); print(__version__)")
           sed -i "s/version=.*/version='$version',/" setup.py
+      - name: Build package
+        run: |
+          python setup.py sdist bdist_wheel
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
