@@ -1,4 +1,4 @@
-from cantonesedetect.judge import judge
+from cantonesedetect.Detector import CantoneseDetector
 
 data1 = [
     "0 我今日第一日返工，請多多指教。",

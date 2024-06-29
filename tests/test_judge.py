@@ -1,11 +1,5 @@
-import os
-import sys
 import unittest
-
-from cantonesedetect.judge import judge
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+from cantonesedetect.Detector import CantoneseDetector
 
 
 def load_test_sentences(file_path):
@@ -24,9 +18,12 @@ test_cases = load_test_sentences('tests/test_judge_sentences.txt')
 
 
 class TestJudgeFunction(unittest.TestCase):
+    def setUp(self):
+        self.detector = CantoneseDetector(split_seg=True, get_quote=True)
+
     def test_judge(self):
         for sentence, quotemode, expected in test_cases:
-            result = judge(sentence, get_quote=(quotemode == 'Quote'))[0]
+            result = self.detector.judge(sentence)
             self.assertEqual(
                 result, expected, f"Failed for input: {sentence}. Expected: {expected}, Quote Mode: {quotemode} but got: {result}")
 
