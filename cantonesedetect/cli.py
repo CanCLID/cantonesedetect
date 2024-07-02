@@ -19,7 +19,7 @@ def main():
     argparser.add_argument(
         '--quotes', help='Separate quotes from matrix and judge them separately.', action='store_true')
     argparser.add_argument(
-        '--split', help='Split the document into segments if True', action='store_true')
+        '--split', help='Split the document into segments', action='store_true', default=False)
     args = argparser.parse_args()
 
     detector = CantoneseDetector(split_seg=args.split, get_quote=args.quotes)
@@ -37,3 +37,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+else:
+    # This allows the script to be run as a module
+    __all__ = ['main']

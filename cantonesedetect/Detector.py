@@ -10,6 +10,7 @@ from collections import Counter
 from typing import Tuple
 
 from cantonesedetect.SegmentFeatures import SegmentFeatures
+from cantonesedetect.JudgementTypes import JudgementType
 
 # Cantonese characters not found in SWC
 CANTO_FEATURE_RE = re.compile(
@@ -142,7 +143,7 @@ class CantoneseDetector:
 
         return segment_features
 
-    def _judge_single_segment(self, segment: str) -> str:
+    def _judge_single_segment(self, segment: str) -> JudgementType:
         """
         Determine the language of a segment based on the presence of Cantonese and SWC features.
 
@@ -160,6 +161,8 @@ class CantoneseDetector:
                 and the length of the segment in Han characters.
         """
         features: SegmentFeatures = self._get_segment_features(segment)
+        if features.length == 0:
+            return JudgementType.NEUTRAL
 
         num_all_features: int = features.canto_feature_count + features.swc_feature_count
 
@@ -169,7 +172,7 @@ class CantoneseDetector:
             self.canto_tolerance * features.length)
 
         if num_all_features == 0 or (lack_canto and lack_swc):
-            return "Neutral"
+            return JudgementType.NEUTRAL
         else:
             has_canto: bool = features.canto_feature_count >= math.ceil(
                 self.canto_presence * features.length)
@@ -182,13 +185,13 @@ class CantoneseDetector:
                 features.canto_feature_count / num_all_features > 0.9
 
             if canto_pref and not has_swc:
-                return "Cantonese"
+                return JudgementType.CANTONESE
             elif swc_pref and not has_canto:
-                return "SWC"
+                return JudgementType.SWC
             else:
-                return "Mixed"
+                return JudgementType.MIXED
 
-    def _judge_segments(self, document: str) -> str:
+    def _judge_segments(self, document: str) -> JudgementType:
         """
         Given a list of segments:
         1. If >95% of the segments are Neutral, the overall judgement is Neutral
@@ -210,9 +213,9 @@ class CantoneseDetector:
 
         judgements_counter: Counter = Counter(judgements)
 
-        canto_seg_count: int = judgements_counter["Cantonese"]
-        swc_seg_count: int = judgements_counter["SWC"]
-        neutral_seg_count: int = judgements_counter["Neutral"]
+        canto_seg_count: int = judgements_counter[JudgementType.CANTONESE]
+        swc_seg_count: int = judgements_counter[JudgementType.SWC]
+        neutral_seg_count: int = judgements_counter[JudgementType.NEUTRAL]
 
         # 95% threshold
         threshold = math.ceil(sum(judgements_counter.values()) * 0.95)
@@ -222,21 +225,21 @@ class CantoneseDetector:
         neutral_only: bool = neutral_seg_count >= threshold
 
         if neutral_only:
-            return "Neutral"
+            return JudgementType.NEUTRAL
         elif canto_only:
-            return "Cantonese"
+            return JudgementType.CANTONESE
         elif swc_only:
-            return "SWC"
+            return JudgementType.SWC
         else:
-            return "Mixed"
+            return JudgementType.MIXED
 
-    def _judge_document(self, document: str) -> str:
+    def _judge_document(self, document: str) -> JudgementType:
         if self.split_seg:
             return self._judge_segments(document)
         else:
             return self._judge_single_segment(document)
 
-    def _judge_matrix_quotes(self, document: str) -> str:
+    def _judge_matrix_quotes(self, document: str) -> JudgementType:
         """
         Judge the language of a document with quotes.
 
@@ -259,22 +262,22 @@ class CantoneseDetector:
 
             if matrix_judgement == quotes_judgement:
                 return matrix_judgement
-            elif matrix_judgement == 'Neutral':
+            elif matrix_judgement == JudgementType.NEUTRAL:
                 return quotes_judgement
-            elif quotes_judgement == 'Neutral':
+            elif quotes_judgement == JudgementType.NEUTRAL:
                 return matrix_judgement
-            elif matrix_judgement == 'SWC' and quotes_judgement == 'Cantonese':
-                judgement = "CantoneseQuotesInSWC"
-            elif matrix_judgement == 'SWC' and quotes_judgement == 'Mixed':
-                judgement = "MixedQuotesInSWC"
+            elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.CANTONESE:
+                judgement = JudgementType.CANTONESE_QUOTES_IN_SWC
+            elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.MIXED:
+                judgement = JudgementType.MIXED_QUOTES_IN_SWC
             else:
-                judgement = "Mixed"
+                judgement = JudgementType.MIXED
 
             # canto_ratio = f'[M]{_c1}:[Q]{_c2}'
             # swc_ratio = f'[M]{_s1}:[Q]{_s2}'
             return judgement
 
-    def judge(self, document: str) -> str:
+    def judge(self, document: str) -> JudgementType:
         """
         The only exposed api. Judge the language of a document.
 

@@ -13,10 +13,11 @@ class SegmentFeatures:
 
         self.canto_feature_count: int = canto_feature_count
         self.swc_feature_count: int = swc_feature_count
+        # Input with no Han characters will have a length of 0.
         self.length: int = length
 
-        self.canto_ratio: float = canto_feature_count / length
-        self.swc_ratio: float = swc_feature_count / length
+        self.canto_ratio: float = canto_feature_count / length if length > 0 else 0
+        self.swc_ratio: float = swc_feature_count / length if length > 0 else 0
 
     def print_analysis(self, print_features=False) -> None:
         """

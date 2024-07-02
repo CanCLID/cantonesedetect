@@ -1,5 +1,6 @@
 import unittest
 from cantonesedetect.Detector import CantoneseDetector
+from cantonesedetect.JudgementTypes import JudgementType
 
 
 def load_test_sentences(file_path):
@@ -25,7 +26,7 @@ class TestJudgeFunction(unittest.TestCase):
         for sentence, quotemode, expected in test_cases:
             result = self.detector.judge(sentence)
             self.assertEqual(
-                result, expected, f"Failed for input: {sentence}. Expected: {expected}, Quote Mode: {quotemode} but got: {result}")
+                result, JudgementType(expected), f"Failed for input: {sentence}. Expected: {expected}, Quote Mode: {quotemode} but got: {result}")
 
 
 if __name__ == "__main__":

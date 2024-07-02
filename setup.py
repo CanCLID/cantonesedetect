@@ -14,4 +14,9 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     test_suite='tests',
+    entry_points={
+        'console_scripts': [
+            'cantonesedetect=cantonesedetect.cli:main',
+        ],
+    },
 )

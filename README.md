@@ -43,19 +43,19 @@ The classifiers output four (coarse) or six (fine-grained) categories. The label
 1. `MixedQuotesInSWC` : 書面中文，引文入面係 `Mixed` | `Mixed` contents quoted within SWC text
 1. `CantoneseQuotesInSWC` : 書面中文，引文入面係純粵文 `cantonese` | `Cantonese` contents quoted within SWC text
 
-## 用法 Usage
-
 ### 系統要求 Requirement
 
 Python >= 3.11
 
 ### 安裝 Installation
 
-首先用 pip 安裝
-
 ```bash
 pip install cantonesedetect
 ```
+
+## 用法 Usage
+
+可以通過 Python 函數嚟引用，亦可以直接 CLI 調用。
 
 ### Python
 
@@ -72,4 +72,8 @@ print(judge('去學校讀書')[0])  # Neutral
 
 ### CLI
 
-待補充 to be added.
+最簡單用法：
+
+```bash
+cantonesedetect --input input.txt
+```
