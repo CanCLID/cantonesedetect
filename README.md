@@ -26,9 +26,19 @@ Lau, Chaak Ming. 2024. Ideologically driven divergence in Cantonese vernacular w
 
 ## 簡介 Introduction
 
-分類方法係利用粵語同書面中文嘅特徵字詞，用 Regex 方式加以識別。
+分類方法係利用粵語同書面中文嘅特徵字詞，用 Regex 方式加以識別。分類器主要有兩個主要參數，`--split`同埋`--quotes`，兩個默認都係`False`。
 
 The filter is based on Regex rules and detects lexical features specific to Cantonese or Written-Chiense.
+
+### 分句參數`--split`
+
+呢個參數默認關閉，如果打開，分類器會用句號、問號、感歎號等標點符號將輸入文本切成單句，對每個單句分類判斷，然後再按照下面判別標準整合嚟得到最終分類。所以呢個參數喺輸入都係單句嘅情況下唔會有區別，只會降低運行速度。喺官粵混雜比較多而且比較長嘅文本輸入下會有更多唔同。
+
+目前因為整合分句判斷嘅邏輯比較嚴，所以如果打開，會相比於關閉更加容易將其他類別判斷為`mixed`。所以對於篩選純粵文嘅用途嚟講，打開呢個參數會提高 precision 但降低 recall。
+
+### 分類標籤參數`--quotes`
+
+呢個參數默認關閉，分類器淨係會將輸入分為 4 類。如果打開，就會再增加兩類總共有 6 個標籤。打開後分類器會將引號內嘅文本抽出嚟，將佢哋同引號外文本分開判斷。下面一段就係介紹呢四個同六個標籤。
 
 ### 標籤 Labels
 
@@ -62,18 +72,22 @@ pip install cantonesedetect
 Use `judge()`
 
 ```python
-from cantonesedetect.judge import judge
+from cantonesedetect import Detector
 
-print(judge('你喺邊度')[0]) # Cantonese
-print(judge('你在哪裏')[0]) # Mandarin
-print(judge('是咁的')[0])  # Mixed
-print(judge('去學校讀書')[0])  # Neutral
+detector = Detector(get_quote=True)
+
+detector.judge('你喺邊度') # cantonese
+detector.judge('你在哪裏') # swc
+detector.judge('是咁的')  # mixed
+detector.judge('去學校讀書')  # neutral
+detector.judge('他説：“係噉嘅。”')  # cantonese_quotes_in_swc
+detector.judge('那就「是咁的」')  # mixed_quotes_in_swc
 ```
 
 ### CLI
 
-最簡單用法：
-
 ```bash
 cantonesedetect --input input.txt
+# 開啓引號抽取判別同分句判別
+cantonesedetect --input input.txt --quotes --split
 ```
