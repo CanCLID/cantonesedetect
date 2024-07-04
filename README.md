@@ -69,12 +69,13 @@ pip install cantonesedetect
 
 ### Python
 
-Use `judge()`
+用下面嘅方法創建一個 `Detector`，然後直接調用 `judge()`就可以得到分類結果：
 
 ```python
 from cantonesedetect import Detector
 
-detector = Detector(get_quote=True)
+# 默認情況下 use_quotes=False, split_seg=False, get_analysis=False
+detector = Detector()
 
 detector.judge('你喺邊度') # cantonese
 detector.judge('你在哪裏') # swc
@@ -84,10 +85,26 @@ detector.judge('他説：“係噉嘅。”')  # cantonese_quotes_in_swc
 detector.judge('那就「是咁的」')  # mixed_quotes_in_swc
 ```
 
+如果想要用引號抽取判別、分句判別同埋獲得分析結果，可以：
+
+```python
+from cantonesedetect import Detector
+
+detector = Detector(use_quotes=True, split_seg=True, get_analysis=True)
+
+judgement, document_features = detector.judge("他説：「我哋今晚食飯。你想去邊度食？」")
+
+# 打印分析結果
+print(document_features.get_analysis())
+# 打印匹配結果
+print(document_features.document_segments_features)
+print([j.value for j in document_features.document_segments_judgements])
+```
+
 ### CLI
 
 ```bash
 cantonesedetect --input input.txt
-# 開啓引號抽取判別同分句判別
-cantonesedetect --input input.txt --quotes --split
+# 開啓引號抽取判別、分句判別並且打印分析結果
+cantonesedetect --input input.txt --quotes --split --print_analysis
 ```

@@ -10,7 +10,8 @@ class TestCantoneseDetector(unittest.TestCase):
     """
 
     def setUp(self):
-        self.detector = CantoneseDetector()
+        self.detector = CantoneseDetector(
+            split_seg=False, use_quotes=True, get_analysis=False)
 
     @pytest.mark.private
     def test_hant_length(self):
@@ -28,10 +29,10 @@ class TestCantoneseDetector(unittest.TestCase):
     @pytest.mark.private
     def test_get_segment_features(self):
         segment = "我哋去邊度食飯啊？我們去哪裏吃飯呢？"
-        features = self.detector._get_segment_features(segment)
-        self.assertEqual(features.canto_feature_count, 2)  # 哋、邊度
-        self.assertEqual(features.swc_feature_count, 2)  # 們、哪裏
-        self.assertEqual(features.length, 16)
+        segment_features = self.detector._get_segment_features(segment)
+        self.assertEqual(segment_features.canto_feature_count, 2)  # 哋、邊度
+        self.assertEqual(segment_features.swc_feature_count, 2)  # 們、哪裏
+        self.assertEqual(segment_features.segment_length, 16)
 
     @pytest.mark.private
     def test_judge_single_segment(self):

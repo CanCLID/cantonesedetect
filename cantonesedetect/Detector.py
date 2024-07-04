@@ -2,13 +2,14 @@
 Core logic:
 1. If quote is true, judge the input into 6 labels, otherwise 4 labels.
 2. If split_seg is true, judge the input by aggregating the judgements of the segments. Otherwise judge the input as a whole segment.
-3. If print_stat is true, print the Cantonese and SWC ratio to I/O. 
+3. If get_analysis is true, print the Cantonese and SWC ratio to I/O.
 """
 import math
 import re
 from collections import Counter
-from typing import Tuple
+from typing import List, Tuple, Optional
 
+from cantonesedetect.DocumentFeatures import DocumentFeatures
 from cantonesedetect.SegmentFeatures import SegmentFeatures
 from cantonesedetect.JudgementTypes import JudgementType
 
@@ -66,19 +67,19 @@ class CantoneseDetector:
 
     Attributes:
         split_seg (bool): Split the document into segments if True. Defaults to False.
-        get_quote (bool): Separate Matrix and Quote if True. Defaults to False.
-        print_stat (bool): Print judgement to I/O if True. Defaults to False.
+        use_quotes (bool): Separate Matrix and Quote if True. Defaults to False.
+        get_analysis (bool): Print judgement to I/O if True. Defaults to False.
     """
 
-    def __init__(self, split_seg: bool = False, get_quote: bool = False, print_stat: bool = False, canto_tolerance: float = 0.01, swc_tolerance: float = 0.01, canto_presence: float = 0.03, swc_presence: float = 0.03) -> None:
+    def __init__(self, split_seg: bool = False, use_quotes: bool = False, get_analysis: bool = False, canto_tolerance: float = 0.01, swc_tolerance: float = 0.01, canto_presence: float = 0.03, swc_presence: float = 0.03) -> None:
         """
         Initialize the thresholds
         """
         # If True, split the document into segments, and the final judgement is aggregated from the segments.
         self.split_seg: bool = split_seg
         # If True, separate Matrix and Quote, and the final judgement is aggregated from the two parts.
-        self.get_quote: bool = get_quote
-        self.print_stat: bool = print_stat
+        self.use_quotes: bool = use_quotes
+        self.get_analysis: bool = get_analysis
 
         # Cantonese features in less than 1% of the text will still be considered SWC.
         self.canto_tolerance: float = canto_tolerance
@@ -136,14 +137,14 @@ class CantoneseDetector:
         swc_feature_count: int = len(swc_feature) - len(swc_exclude)
 
         # len for faster execution
-        length = self._hant_length(segment)
+        segment_length = self._hant_length(segment)
 
         segment_features = SegmentFeatures(segment, canto_feature, canto_exclude, swc_feature,
-                                           swc_exclude, canto_feature_count, swc_feature_count, length)
+                                           swc_exclude, canto_feature_count, swc_feature_count, segment_length)
 
         return segment_features
 
-    def _judge_single_segment(self, segment: str) -> JudgementType:
+    def _judge_single_segment(self, segment: str) -> Tuple[JudgementType, Optional[SegmentFeatures]]:
         """
         Determine the language of a segment based on the presence of Cantonese and SWC features.
 
@@ -156,42 +157,48 @@ class CantoneseDetector:
             segment (str): The segment of text to be judged.
 
         Returns:
-            tuple: A tuple containing the language of the segment (Cantonese, SWC, Neutral, or Mixed), 
-                the count of Cantonese features in the segment, the count of SWC features in the segment, 
-                and the length of the segment in Han characters.
+            tuple: A tuple containing the judgement and the segment features.
         """
-        features: SegmentFeatures = self._get_segment_features(segment)
-        if features.length == 0:
-            return JudgementType.NEUTRAL
+        segment_features: SegmentFeatures = self._get_segment_features(segment)
 
-        num_all_features: int = features.canto_feature_count + features.swc_feature_count
+        # If the segment has no Han characters, it's neutral
+        if segment_features.segment_length == 0:
+            return (JudgementType.NEUTRAL, segment_features) if self.get_analysis else JudgementType.NEUTRAL
 
-        lack_swc: bool = features.swc_feature_count <= math.floor(
-            self.swc_tolerance * features.length)
-        lack_canto: bool = features.canto_feature_count <= math.floor(
-            self.canto_tolerance * features.length)
+        # Number of Cantonese and SWC features in total
+        num_all_features: int = segment_features.canto_feature_count + \
+            segment_features.swc_feature_count
 
+        # If the Cantonese or SWC features are less than the torlerance threshold, then it's lacking Cantonese or SWC features.
+        lack_swc: bool = segment_features.swc_feature_count <= math.floor(
+            self.swc_tolerance * segment_features.segment_length)
+        lack_canto: bool = segment_features.canto_feature_count <= math.floor(
+            self.canto_tolerance * segment_features.segment_length)
+
+        # If there are no features or both are lacking, it's a neutral segment
         if num_all_features == 0 or (lack_canto and lack_swc):
-            return JudgementType.NEUTRAL
-        else:
-            has_canto: bool = features.canto_feature_count >= math.ceil(
-                self.canto_presence * features.length)
-            has_swc: bool = features.swc_feature_count >= math.ceil(
-                self.swc_presence * features.length)
+            return (JudgementType.NEUTRAL, segment_features) if self.get_analysis else JudgementType.NEUTRAL
 
-            canto_pref: bool = features.canto_feature_count / num_all_features - \
-                features.swc_feature_count / num_all_features > 0.9
-            swc_pref: bool = features.swc_feature_count / num_all_features - \
-                features.canto_feature_count / num_all_features > 0.9
+        # If not lacking
+        else:
+            has_canto: bool = segment_features.canto_feature_count >= math.ceil(
+                self.canto_presence * segment_features.segment_length)
+            has_swc: bool = segment_features.swc_feature_count >= math.ceil(
+                self.swc_presence * segment_features.segment_length)
+
+            canto_pref: bool = segment_features.canto_feature_count / num_all_features - \
+                segment_features.swc_feature_count / num_all_features > 0.9
+            swc_pref: bool = segment_features.swc_feature_count / num_all_features - \
+                segment_features.canto_feature_count / num_all_features > 0.9
 
             if canto_pref and not has_swc:
-                return JudgementType.CANTONESE
+                return (JudgementType.CANTONESE, segment_features) if self.get_analysis else JudgementType.CANTONESE
             elif swc_pref and not has_canto:
-                return JudgementType.SWC
+                return (JudgementType.SWC, segment_features) if self.get_analysis else JudgementType.SWC
             else:
-                return JudgementType.MIXED
+                return (JudgementType.MIXED, segment_features) if self.get_analysis else JudgementType.MIXED
 
-    def _judge_segments(self, document: str) -> JudgementType:
+    def _judge_segments(self, segments: List[str], document_features: DocumentFeatures = None) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
         """
         Given a list of segments:
         1. If >95% of the segments are Neutral, the overall judgement is Neutral
@@ -201,17 +208,29 @@ class CantoneseDetector:
 
         Args:
             segments (list): A list of segments to be judged.
+            document_features (DocumentFeatures): The features of the document.
 
         Returns:
-            str: The aggregated judgement of the segments.
+            judgement (JudgementType): The aggregated judgement of the segments.
+            document_features (DocumentFeatures): Aggregation of all segment features.
         """
-        segments = filter(lambda x: x.strip(),
-                          ALL_DELIMITERS_RE.split(document))
+        if self.get_analysis:
+            assert document_features is not None
+            segment_judgements: List[JudgementType] = []
+            # Aggregate the judgements and features of the segments into document_features
+            for segment in segments:
+                segment_judgement, segment_features = self._judge_single_segment(
+                    segment)
+                document_features.document_segments_judgements.append(
+                    segment_judgement)
+                document_features.document_segments_features.append(
+                    segment_features)
+                segment_judgements.append(segment_judgement)
+        else:
+            segment_judgements: List[JudgementType] = [self._judge_single_segment(
+                segment) for segment in segments]
 
-        judgements = [self._judge_single_segment(
-            segment) for segment in segments]
-
-        judgements_counter: Counter = Counter(judgements)
+        judgements_counter: Counter = Counter(segment_judgements)
 
         canto_seg_count: int = judgements_counter[JudgementType.CANTONESE]
         swc_seg_count: int = judgements_counter[JudgementType.SWC]
@@ -225,21 +244,46 @@ class CantoneseDetector:
         neutral_only: bool = neutral_seg_count >= threshold
 
         if neutral_only:
-            return JudgementType.NEUTRAL
+            return (JudgementType.NEUTRAL, document_features) if self.get_analysis else JudgementType.NEUTRAL
         elif canto_only:
-            return JudgementType.CANTONESE
+            return (JudgementType.CANTONESE, document_features) if self.get_analysis else JudgementType.CANTONESE
         elif swc_only:
-            return JudgementType.SWC
+            return (JudgementType.SWC, document_features) if self.get_analysis else JudgementType.SWC
         else:
-            return JudgementType.MIXED
+            return (JudgementType.MIXED, document_features) if self.get_analysis else JudgementType.MIXED
 
-    def _judge_document(self, document: str) -> JudgementType:
+    def _judge_document(self, document: str) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
+        """
+        For an input document, judge based on whether `split_seg` and `get_analysis` are True or False.
+
+        If `split_seg` is True, document is split into segments and the final judgement is an aggregation of
+        segment judgements, otherwise the document is judged as one single segment.
+
+        If `get_analysis` is True, function will return the document features along with the judgement.
+        Otherwise, it will return the judgement only.
+        """
+        # Split the document into segments if split_seg is True
         if self.split_seg:
-            return self._judge_segments(document)
+            segments = filter(lambda x: x.strip(),
+                              ALL_DELIMITERS_RE.split(document))
+        # Otherwise, treat the document as a single segment
         else:
-            return self._judge_single_segment(document)
+            segments = [document]
 
-    def _judge_matrix_quotes(self, document: str) -> JudgementType:
+        if self.get_analysis:
+            # Store document features in an object if get_analysis is True
+            document_features = DocumentFeatures(
+                split_seg=self.split_seg, use_quotes=self.use_quotes)
+
+            judgement, document_features = self._judge_segments(
+                segments=segments, document_features=document_features)
+
+            return judgement, document_features
+        else:
+            judgement = self._judge_segments(segments)
+            return judgement
+
+    def _judge_matrix_quotes(self, document: str) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
         """
         Judge the language of a document with quotes.
 
@@ -252,32 +296,59 @@ class CantoneseDetector:
 
         if matrix == "…":
             # Matrix is empty, entire input is a quote
-            return self._judge_document(ALL_QUOTEMARKS_RE.sub("", quotes))
+            return self._judge_document(
+                ALL_QUOTEMARKS_RE.sub("", quotes))
         elif quotes == "":
             # No quotes
             return self._judge_document(matrix)
         else:
-            matrix_judgement = self._judge_document(matrix)
-            quotes_judgement = self._judge_document(quotes)
+            if self.get_analysis:
+                matrix_judgement, matrix_document_features = self._judge_document(
+                    matrix)
+                quotes_judgement, quotes_document_features = self._judge_document(
+                    quotes)
 
-            if matrix_judgement == quotes_judgement:
-                return matrix_judgement
-            elif matrix_judgement == JudgementType.NEUTRAL:
-                return quotes_judgement
-            elif quotes_judgement == JudgementType.NEUTRAL:
-                return matrix_judgement
-            elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.CANTONESE:
-                judgement = JudgementType.CANTONESE_QUOTES_IN_SWC
-            elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.MIXED:
-                judgement = JudgementType.MIXED_QUOTES_IN_SWC
+                if matrix_judgement == quotes_judgement:
+                    return matrix_judgement, matrix_document_features
+                elif matrix_judgement == JudgementType.NEUTRAL:
+                    return quotes_judgement, quotes_document_features
+                elif quotes_judgement == JudgementType.NEUTRAL:
+                    return matrix_judgement, matrix_document_features
+                else:
+                    # Initalize a new document features object for returning
+                    document_features = DocumentFeatures(
+                        self.split_seg, self.use_quotes)
+                    document_features._merge_judgements_features(
+                        matrix_document_features.document_segments_judgements,
+                        quotes_document_features.document_segments_judgements,
+                        matrix_document_features.document_segments_features,
+                        quotes_document_features.document_segments_features
+                    )
+
+                    if matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.CANTONESE:
+                        return JudgementType.CANTONESE_QUOTES_IN_SWC, document_features
+                    elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.MIXED:
+                        return JudgementType.MIXED_QUOTES_IN_SWC, document_features
+                    else:
+                        return JudgementType.MIXED, document_features
             else:
-                judgement = JudgementType.MIXED
+                matrix_judgement = self._judge_document(matrix)
+                quotes_judgement = self._judge_document(quotes)
 
-            # canto_ratio = f'[M]{_c1}:[Q]{_c2}'
-            # swc_ratio = f'[M]{_s1}:[Q]{_s2}'
-            return judgement
+                if matrix_judgement == quotes_judgement:
+                    return matrix_judgement
+                elif matrix_judgement == JudgementType.NEUTRAL:
+                    return quotes_judgement
+                elif quotes_judgement == JudgementType.NEUTRAL:
+                    return matrix_judgement
+                elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.CANTONESE:
+                    return JudgementType.CANTONESE_QUOTES_IN_SWC
+                elif matrix_judgement == JudgementType.SWC and quotes_judgement == JudgementType.MIXED:
+                    return JudgementType.MIXED_QUOTES_IN_SWC
+                else:
+                    return JudgementType.MIXED
 
-    def judge(self, document: str) -> JudgementType:
+    def judge(self, document: str) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
         """
         The only exposed api. Judge the language of a document.
 
@@ -287,7 +358,12 @@ class CantoneseDetector:
         Returns:
             str: The final judgement.
         """
-        if self.get_quote:
+        if self.use_quotes:
             return self._judge_matrix_quotes(document)
         else:
-            return self._judge_document(document)
+            if self.get_analysis:
+                judgement, document_features = self._judge_document(document)
+                return judgement, document_features
+            else:
+                judgement = self._judge_document(document)
+                return judgement

@@ -20,7 +20,7 @@ test_cases = load_test_sentences('tests/test_judge_sentences.txt')
 
 class TestJudgeFunction(unittest.TestCase):
     def setUp(self):
-        self.detector = CantoneseDetector(split_seg=True, get_quote=True)
+        self.detector = CantoneseDetector(split_seg=True, use_quotes=True)
 
     def test_judge(self):
         for sentence, quotemode, expected in test_cases:

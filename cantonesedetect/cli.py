@@ -20,19 +20,25 @@ def main():
         '--quotes', help='Separate quotes from matrix and judge them separately.', action='store_true')
     argparser.add_argument(
         '--split', help='Split the document into segments', action='store_true', default=False)
+    argparser.add_argument(
+        '--print_analysis', help='Split the document into segments', action='store_true', default=False)
     args = argparser.parse_args()
 
-    detector = CantoneseDetector(split_seg=args.split, get_quote=args.quotes)
+    detector = CantoneseDetector(
+        split_seg=args.split, use_quotes=args.quotes, get_analysis=args.print_analysis)
 
     with open(args.input, encoding='utf-8') as f:
-        for line in f:
-            l = line.strip()
-            judgement = detector.judge(l)
-            _line = judgement
-            if args.mode == 'full':
-                _line = _line + f'\t{l}'
-            _line = _line + '\n'
-            sys.stdout.write(_line)
+        if args.print_analysis:
+            for line in f:
+                judgement, document_features = detector.judge(line.strip())
+                analysis = document_features.get_analysis()
+                sys.stdout.write(f"====================================\nJUDGEMENT: {
+                                 judgement.value}\n")
+                sys.stdout.write(analysis)
+        else:
+            for line in f:
+                judgement = detector.judge(line.strip())
+                sys.stdout.write(judgement.value + '\n')
 
 
 if __name__ == '__main__':
