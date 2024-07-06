@@ -9,9 +9,9 @@ import re
 from collections import Counter
 from typing import List, Tuple, Optional
 
-from cantonesedetect.DocumentFeatures import DocumentFeatures
-from cantonesedetect.SegmentFeatures import SegmentFeatures
-from cantonesedetect.JudgementTypes import JudgementType
+from .DocumentFeatures import DocumentFeatures
+from .SegmentFeatures import SegmentFeatures
+from .JudgementTypes import JudgementType
 
 # Cantonese characters not found in SWC
 CANTO_FEATURE_RE = re.compile(
@@ -126,7 +126,7 @@ class CantoneseDetector:
             segment (str): The segment of text to be analyzed.
 
         Returns:
-            None
+            segment_features (SegmentFeatures): The features of the segment.
         """
         canto_feature = CANTO_FEATURE_RE.findall(segment)
         canto_exclude = CANTO_EXCLUDE_RE.findall(segment)

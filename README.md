@@ -72,10 +72,10 @@ pip install cantonesedetect
 用下面嘅方法創建一個 `Detector`，然後直接調用 `judge()`就可以得到分類結果：
 
 ```python
-from cantonesedetect import Detector
+from cantonesedetect import CantoneseDetector
 
 # 默認情況下 use_quotes=False, split_seg=False, get_analysis=False
-detector = Detector()
+detector = CantoneseDetector()
 
 detector.judge('你喺邊度') # cantonese
 detector.judge('你在哪裏') # swc
@@ -95,13 +95,22 @@ detector = Detector(use_quotes=True, split_seg=True, get_analysis=True)
 judgement, document_features = detector.judge("他説：「我哋今晚食飯。你想去邊度食？」")
 
 # 打印分析結果
+# Print analysis results
 print(document_features.get_analysis())
-# 打印匹配結果
-print(document_features.document_segments_features)
+
+# `document_features` 入面有每個分句嘅 `document_segments_features` 同 `document_segments_judgements`
+# `document_features` object contains `document_segments_features` which is a list of segment features
+print(document_features.document_segments_features[0].canto_feature)
+print(document_features.document_segments_features[0].canto_exclude)
+print(document_features.document_segments_features[0].swc_feature)
+print(document_features.document_segments_features[0].swc_exclude)
+# Also contains `document_segments_judgements` which is a list of judgements of the segments
 print([j.value for j in document_features.document_segments_judgements])
 ```
 
 ### CLI
+
+如果直接喺 CLI 調用嘅話，只需要指明`--input`就得。 `--quotes`、`--split`、`--print_analysis`三個參數都默認關閉，如果標明就會打開：
 
 ```bash
 cantonesedetect --input input.txt

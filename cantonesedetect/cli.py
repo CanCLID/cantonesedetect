@@ -1,6 +1,6 @@
 import argparse
 import sys
-from cantonesedetect.Detector import CantoneseDetector
+from cantonesedetect import CantoneseDetector
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -14,8 +14,6 @@ def main():
 
     argparser.add_argument('--input', type=str, default='input.txt',
                            help='Specify input text file, where each line is a sentence. Default is `input.txt`.')
-    argparser.add_argument('--mode', type=str, default='judgement',
-                           help='Specify the mode of output.\n `judgement` for all judgements with a class label, `full` for all the labels prepended to the sentences, Default is `judgement`.')
     argparser.add_argument(
         '--quotes', help='Separate quotes from matrix and judge them separately.', action='store_true')
     argparser.add_argument(
@@ -32,7 +30,7 @@ def main():
             for line in f:
                 judgement, document_features = detector.judge(line.strip())
                 analysis = document_features.get_analysis()
-                sys.stdout.write(f"====================================\nJUDGEMENT: {
+                sys.stdout.write(f"====================================\nINPUT:{line.strip()}\nJUDGEMENT: {
                                  judgement.value}\n")
                 sys.stdout.write(analysis)
         else:
