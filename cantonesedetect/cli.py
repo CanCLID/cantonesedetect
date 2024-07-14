@@ -7,7 +7,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 def main():
     """
-    When used as a command line tool, specify input text file with `--input <INPUT.txt>`, and output mode with `--mode <MODE>`.
+    When used as a command line tool, specify input text file with `--input <INPUT.txt>`, 
+    and output mode with `--mode <MODE>`.
     """
     argparser = argparse.ArgumentParser(
         description='Specify input text file with `--input <INPUT.txt>`, where each line is a sentence. ')

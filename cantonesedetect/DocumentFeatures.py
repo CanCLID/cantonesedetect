@@ -1,24 +1,32 @@
-import sys
 from typing import List
+
 from cantonesedetect.JudgementTypes import JudgementType
 from cantonesedetect.SegmentFeatures import SegmentFeatures
 
 
 class DocumentFeatures:
-    def __init__(self, split_seg, use_quotes):
+    """
+    Store the `SegmentFeatures`s and segment judgements of the document.
+    """
+
+    def __init__(self, split_seg, use_quotes) -> None:
         self.split_seg = split_seg
         self.use_quotes = use_quotes
 
         self.document_segments_features: List[SegmentFeatures] = []
         self.document_segments_judgements: List[JudgementType] = []
 
-    def _merge_judgements_features(self, matrix_judgements: List[JudgementType], quotes_judgements: List[JudgementType], matrix_features: List[SegmentFeatures], quotes_features: List[SegmentFeatures]):
+    def _merge_judgements_features(self, matrix_judgements: List[JudgementType], quotes_judgements: List[JudgementType], matrix_features: List[SegmentFeatures], quotes_features: List[SegmentFeatures]) -> None:
+        """
+        For documents that split the matrix and quotes, the document judgements and features 
+        are merged from those of the matrix and quotes.
+        """
         assert self.use_quotes is True
 
         self.document_segments_features = matrix_features + quotes_features
         self.document_segments_judgements = matrix_judgements + quotes_judgements
 
-    def get_analysis(self):
+    def get_analysis(self) -> str:
         """
         Return a string representation of the document features
         """

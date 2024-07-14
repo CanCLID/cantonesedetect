@@ -1,6 +1,6 @@
 # CantoneseDetect 粵語特徵分類器
 
-[![license](https://img.shields.io/github/license/DAVFoundation/captain-n3m0.svg?style=flat-square)](https://github.com/DAVFoundation/captain-n3m0/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/DAVFoundation/captain-n3m0.svg?style=for-the-badge&color=)](https://github.com/DAVFoundation/captain-n3m0/blob/master/LICENSE)
 
 本項目為 [canto-filter](https://github.com/CanCLID/canto-filter) 之後續。canto-filter 得 4 個分類標籤且判斷邏輯更加快速簡單，適合在線快速篩選判別文本或者其他要求低延遲、速度快嘅應用場合。本項目採用更精細嘅判斷邏輯，有 6 個分類標籤，準確度更高，但速度亦會相對 canto-filter 更慢。
 
@@ -8,19 +8,15 @@ This is an extension of the [canto-filter](https://github.com/CanCLID/canto-filt
 
 ## 引用 Citation
 
-抽出字詞特徵嘅策略同埋實踐方式，喺下面整理。討論本分類器時，請引用：
-
-Chaak-ming Lau, Mingfei Lau, and Ann Wai Huen To. 2024.
-[The Extraction and Fine-grained Classification of Written Cantonese Materials through Linguistic Feature Detection.](https://aclanthology.org/2024.eurali-1.4/)
-In Proceedings of the 2nd Workshop on Resources and Technologies for Indigenous, Endangered and Lesser-resourced Languages in Eurasia (EURALI)
-@ LREC-COLING 2024, pages 24–29, Torino, Italia. ELRA and ICCL.
-
 分類器採用嘅分類標籤及基準，參考咗對使用者嘅語言意識形態嘅研究。討論分類準則時，請引用：
 
 The definitions and boundaries of the labels depend on the user's language ideology.
 When discussing the criteria adopted by this tool, please cite:
 
-Lau, Chaak Ming. 2024. Ideologically driven divergence in Cantonese vernacular writing practices. In J.-F. Dupré, editor, _Politics of Language in Hong Kong_, Routledge.
+> Chaak-ming Lau, Mingfei Lau, and Ann Wai Huen To. 2024.
+> [The Extraction and Fine-grained Classification of Written Cantonese Materials through Linguistic Feature Detection.](https://aclanthology.org/2024.eurali-1.4/)
+> In Proceedings of the 2nd Workshop on Resources and Technologies for Indigenous, Endangered and Lesser-resourced Languages in Eurasia (EURALI)
+> @ LREC-COLING 2024, pages 24–29, Torino, Italia. ELRA and ICCL.
 
 ---
 
@@ -67,9 +63,13 @@ pip install cantonesedetect
 
 可以通過 Python 函數嚟引用，亦可以直接 CLI 調用。
 
+You can call the Python API or this library, or run it directly in CLI.
+
 ### Python
 
 用下面嘅方法創建一個 `Detector`，然後直接調用 `judge()`就可以得到分類結果：
+
+Initialize a `Detector` and call the `judge()` function on inputs, and you will get the classification outputs.
 
 ```python
 from cantonesedetect import CantoneseDetector
@@ -86,6 +86,8 @@ detector.judge('那就「是咁的」')  # mixed_quotes_in_swc
 ```
 
 如果想要用引號抽取判別、分句判別同埋獲得分析結果，可以：
+
+If you want to judge inputs based on matrix-quote-splitting, or spliting into segments, you can:
 
 ```python
 from cantonesedetect import Detector
@@ -112,8 +114,11 @@ print([j.value for j in document_features.document_segments_judgements])
 
 如果直接喺 CLI 調用嘅話，只需要指明`--input`就得。 `--quotes`、`--split`、`--print_analysis`三個參數都默認關閉，如果標明就會打開：
 
+If you run directly in CLI, simply specify the `--input`. The optional arguments `--quotes`、`--split`、`--print_analysis` are all `False` by default, and you can turn them on by specifying them.
+
 ```bash
 cantonesedetect --input input.txt
 # 開啓引號抽取判別、分句判別並且打印分析結果
+# Enable matrix-quotes-splitting, segment-splitting and printing the analysis.
 cantonesedetect --input input.txt --quotes --split --print_analysis
 ```

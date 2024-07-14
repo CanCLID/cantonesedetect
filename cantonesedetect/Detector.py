@@ -7,11 +7,11 @@ Core logic:
 import math
 import re
 from collections import Counter
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 from .DocumentFeatures import DocumentFeatures
-from .SegmentFeatures import SegmentFeatures
 from .JudgementTypes import JudgementType
+from .SegmentFeatures import SegmentFeatures
 
 # Cantonese characters not found in SWC
 CANTO_FEATURE_RE = re.compile(
@@ -92,7 +92,7 @@ class CantoneseDetector:
 
     def _hant_length(self, segment: str) -> int:
         """
-        Return the number of Han characters in a segment.
+        Return the number of Han characters in a segment. Punctuations are excluded.
 
         Args:
             segment (str): The segment of text to be analyzed.
@@ -144,7 +144,7 @@ class CantoneseDetector:
 
         return segment_features
 
-    def _judge_single_segment(self, segment: str) -> Tuple[JudgementType, Optional[SegmentFeatures]]:
+    def _judge_single_segment(self, segment: str) -> JudgementType | Tuple[JudgementType, SegmentFeatures]:
         """
         Determine the language of a segment based on the presence of Cantonese and SWC features.
 
@@ -198,13 +198,14 @@ class CantoneseDetector:
             else:
                 return (JudgementType.MIXED, segment_features) if self.get_analysis else JudgementType.MIXED
 
-    def _judge_segments(self, segments: List[str], document_features: DocumentFeatures = None) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
+    def _judge_segments(self, segments: List[str], document_features: Optional[DocumentFeatures] = None) -> JudgementType | Tuple[JudgementType, DocumentFeatures]:
         """
         Given a list of segments:
         1. If >95% of the segments are Neutral, the overall judgement is Neutral
         2. If Neutral + Cantonese takes up >95%, then overall it is Cantonese
         3. If Neutral + SWC takes up > 95%, then overall it is SWC
         4. Otherwise, it is Mixed.
+        If self.get_analysis is True, return the document features as well.
 
         Args:
             segments (list): A list of segments to be judged.
@@ -252,7 +253,7 @@ class CantoneseDetector:
         else:
             return (JudgementType.MIXED, document_features) if self.get_analysis else JudgementType.MIXED
 
-    def _judge_document(self, document: str) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
+    def _judge_document(self, document: str) -> JudgementType | Tuple[JudgementType, DocumentFeatures]:
         """
         For an input document, judge based on whether `split_seg` and `get_analysis` are True or False.
 
@@ -264,11 +265,11 @@ class CantoneseDetector:
         """
         # Split the document into segments if split_seg is True
         if self.split_seg:
-            segments = filter(lambda x: x.strip(),
-                              ALL_DELIMITERS_RE.split(document))
+            segments: List[str] = filter(lambda x: x.strip(),
+                                         ALL_DELIMITERS_RE.split(document))
         # Otherwise, treat the document as a single segment
         else:
-            segments = [document]
+            segments: List[str] = [document]
 
         if self.get_analysis:
             # Store document features in an object if get_analysis is True
@@ -283,7 +284,7 @@ class CantoneseDetector:
             judgement = self._judge_segments(segments)
             return judgement
 
-    def _judge_matrix_quotes(self, document: str) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
+    def _judge_matrix_quotes(self, document: str) -> JudgementType | Tuple[JudgementType, DocumentFeatures]:
         """
         Judge the language of a document with quotes.
 
@@ -348,7 +349,7 @@ class CantoneseDetector:
                 else:
                     return JudgementType.MIXED
 
-    def judge(self, document: str) -> Tuple[JudgementType, Optional[DocumentFeatures]]:
+    def judge(self, document: str) -> JudgementType | Tuple[JudgementType, DocumentFeatures]:
         """
         The only exposed api. Judge the language of a document.
 
@@ -356,7 +357,8 @@ class CantoneseDetector:
             document (str): The document to be judged.
 
         Returns:
-            str: The final judgement.
+            JudgementType: The final judgement.
+            (if self.get_analysis) DocumentFeatures: The features of the document if get_analysis is True.
         """
         if self.use_quotes:
             return self._judge_matrix_quotes(document)
