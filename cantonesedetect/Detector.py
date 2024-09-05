@@ -15,17 +15,18 @@ from .SegmentFeatures import SegmentFeatures
 
 # Cantonese characters not found in SWC
 CANTO_FEATURE_RE = re.compile(
-    r'[嘅嗰啲咗佢喺咁噉冇啩哋畀嚟諗惗乜嘢閪撚𨳍𨳊瞓睇㗎餸𨋢摷喎嚿噃嚡嘥嗮啱揾搵喐逳噏𢳂岋糴揈捹撳㩒𥄫攰癐冚孻冧𡃁嚫跣𨃩瀡氹嬲掟孭黐唞㪗埞忟𢛴嗱係唔喇俾]|'
-    r'唔[係得會好識使洗駛通知到去走掂該錯差]|點[樣會做得解]|[琴尋噚聽第]日|[而依]家|家[下陣]|[真就實梗又話都]係|邊[度個位科]|'
-    r'[嚇凍攝整揩逢淥浸激][親嚫]|[橫搞傾諗得唔]掂|仲[有係話要得好衰唔]|返[學工去歸]|執[好生實返輸]|[留坐剩]低|'
-    r'屋企|收皮|慳錢|傾[偈計]|幫襯|求其|是[但旦]|[濕溼]碎|零舍|肉[赤緊酸]|核突|同埋|勁[秋抽]|邊[度隻條張樣個]|去邊'
-)
+    r'[嘅嗰啲咗佢喺咁噉冇哋畀嚟諗惗乜嘢閪撚𨳍𨳊瞓睇餸𨋢摷嚿嚡嘥嗮啱揾搵揦喐逳噏𢳂岋糴揈捹撳㩒𥄫攰癐冚孻冧𡃁嚫跣𨃩瀡氹嬲掟揼揸孭黐唞㪗埞忟𢛴踎脷]|' +
+    r'[㗎𠺢喎噃啩𠿪啫唧嗱]|' +
+    r'唔[係得會想好識使洗駛通知到去走掂該錯差多少]|點[樣會做得解知]|[琴尋噚聽第]日|[而依]家|[真就實梗緊堅又話都但淨剩只定一]係|邊[度個位科]|' +
+    r'[嚇凍攝整揩逢淥浸激][親嚫]|[橫搞傾得唔好]掂|仲[有係話要得好衰唔]|返[學工去翻番到]|[好得]返|執[好生實返輸]|[癡痴][埋線住起身]|[同帶做整溝炒煮]埋|[剩淨坐留]低|傾[偈計]|' +
+    r'屋企|收皮|慳錢|屈機|隔籬|幫襯|求其|家陣|仆街|是[但旦]|[濕溼]碎|零舍|肉[赤緊酸]|核突|[勁隻][秋抽]|[呃𧦠][鬼人秤稱錢]')
+
 
 # A list of exceptions where the above characters can be found in SWC
 CANTO_EXCLUDE_RE = re.compile(r'(關係|吱唔|咿唔|喇嘛|喇叭|俾路支|俾斯麥)')
 
 # SWC characters that are less common in Cantonese
-SWC_FEATURE_RE = re.compile(r'[這哪唄咱啥甭那是的他她它吧沒麼么些了卻説說吃弄把也在]|而已')
+SWC_FEATURE_RE = re.compile(r'[這哪唄咱啥甭那是的他她它吧沒麼么些了卻説說吃弄把也在]|[事門塊勁花那點會]兒|而已')
 
 # A list of exceptions where the above characters can be found in Cantonese (mainly phrases or proper nouns)
 SWC_EXCLUDE_RE = re.compile(
