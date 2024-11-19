@@ -33,8 +33,10 @@ class DocumentFeatures:
         assert len(self.document_segments_features) == len(
             self.document_segments_judgements)
 
-        analysis_string = f"------------------------------------\nSplitting quotes: {
-            self.use_quotes}\nSplitting segments: {self.split_seg}\n\n----------Segment Features----------\n"
+        analysis_string = (
+            f"------------------------------------\nSplitting quotes: {self.use_quotes}\n"
+            f"Splitting segments: {self.split_seg}\n\n----------Segment Features----------\n"
+        )
 
         for segment_features, segment_judgement in zip(self.document_segments_features, self.document_segments_judgements):
             cantonese_features = ", ".join(segment_features.canto_feature)
