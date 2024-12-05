@@ -1,10 +1,12 @@
-from enum import StrEnum, auto
+from enum import Enum
 
+class JudgementType(str, Enum):
+    CANTONESE = "cantonese"
+    SWC = "swc"
+    NEUTRAL = "neutral"
+    MIXED = "mixed"
+    CANTONESE_QUOTES_IN_SWC = "cantonese_quotes_in_swc"
+    MIXED_QUOTES_IN_SWC = "mixed_quotes_in_swc"
 
-class JudgementType(StrEnum):
-    CANTONESE = auto()
-    SWC = auto()
-    NEUTRAL = auto()
-    MIXED = auto()
-    CANTONESE_QUOTES_IN_SWC = auto()
-    MIXED_QUOTES_IN_SWC = auto()
+    def __str__(self) -> str:
+        return self.value

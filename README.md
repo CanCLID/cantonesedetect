@@ -51,7 +51,7 @@ The classifiers output four (coarse) or six (fine-grained) categories. The label
 
 ### 系統要求 Requirement
 
-Python >= 3.11
+Python >= 3.10
 
 ### 安裝 Installation
 
